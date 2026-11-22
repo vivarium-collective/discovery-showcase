@@ -147,6 +147,35 @@ def run_batch(
     return {"t": ts, "X": Xs, "S": Ss, "P": Ps, "t_intervene": t_intervene}
 
 
+# --- Mechanism signature (for the discovery-engine benchmark provider) -------
+# Public mechanism labels (what a hypothesis/model proposes) -> reference preset.
+MECHANISM_LABELS = {
+    "substrate_exhaustion": "substrate",
+    "byproduct_inhibition": "byproduct",
+    "density_cap": "decoy",
+}
+
+
+def growth_signature(label: str, *, seed: int = 0) -> float:
+    """A scalar fingerprint of a plateau mechanism: ``2*spike_rescues + remove_rescues``.
+
+    Computed by running the REAL model under the two diagnostic interventions:
+    substrate-exhaustion -> (spike rescues, remove does not) -> 2;
+    byproduct-inhibition -> (remove rescues, spike does not) -> 1;
+    density-cap          -> (neither) -> 0. Distinct per mechanism, so a band around one
+    value identifies it. An unknown label returns -1 (never in any mechanism's band).
+    """
+    mech = MECHANISM_LABELS.get(label, label)
+    if mech not in REFERENCE_PRESETS:
+        return -1.0
+    params = REFERENCE_PRESETS[mech]
+    spike = is_regrowth(run_batch(params, t_end=90.0, intervention=spike_substrate,
+                                  t_intervene=45.0, seed=seed), params)
+    remove = is_regrowth(run_batch(params, t_end=90.0, intervention=remove_byproduct,
+                                   t_intervene=45.0, seed=seed), params)
+    return 2.0 * int(spike) + 1.0 * int(remove)
+
+
 def max_growth_rate(traj: dict, t_from: Optional[float] = None) -> float:
     """Max observed specific growth rate d(ln X)/dt after ``t_from`` (default: all)."""
     t, X = traj["t"], traj["X"]
