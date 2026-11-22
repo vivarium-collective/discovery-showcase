@@ -203,6 +203,30 @@ def export_main_figures(paper: Path) -> None:
           f"(wire into main.tex where ready)")
 
 
+def export_discovery_figures(paper: Path) -> None:
+    """Generate the discovery-cycle figures from REAL workspace artifacts into the paper.
+
+    The investigation graph (``discover linkage``), the baseline run's emitted observables (read
+    through RunReader), and the monod_batch composite diagram --- all driven by what the engine
+    produced, not hand-drawn.
+    """
+    from viva_discovery_showcase import paper_viz as V
+    from viva_discovery_showcase.baseline_run import run_baseline
+    figdir = paper / "figures"
+    figdir.mkdir(parents=True, exist_ok=True)
+    try:
+        linkage = V.load_linkage(REPO)
+        V.render_investigation_graph(linkage, figdir / "fig_investigation_graph.pdf")
+        r = run_baseline("byproduct_inhibition", record=False)
+        V.render_run_backed_observables(r["store"], figdir / "fig_run_backed_observables.pdf",
+                                        graded_value=1.72)
+        V.render_composite_diagram(figdir / "fig_monod_composite.pdf")
+        print(f"discovery figures: investigation graph ({len(linkage['nodes'])} nodes), "
+              f"run-backed observables, composite -> {figdir}")
+    except Exception as e:  # noqa: BLE001 — never block the rest of the assembly
+        print(f"discovery figures: skipped ({type(e).__name__}: {e})")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--run", action="store_true", help="generate a new record before assembling")
@@ -216,6 +240,7 @@ def main() -> int:
     build_appendix(paper)
     build_supplement(paper)
     export_main_figures(paper)
+    export_discovery_figures(paper)
     return 0
 
 
