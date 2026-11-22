@@ -1,0 +1,8 @@
+{
+  "attempted": 3,
+  "of": 3,
+  "condition_B_fully_discriminating": "3/3",
+  "condition_B_minimal_optimal": "1/3",
+  "condition_C_closed_loop_recovered": "3/3",
+  "E05c_construction_correct": "3/3"
+}
