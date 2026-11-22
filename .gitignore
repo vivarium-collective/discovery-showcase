@@ -33,3 +33,7 @@ workspace/reports/assets/*
 .superpowers/brainstorm/
 # Scratch TODO list agents keep per-workspace; not tracked content.
 todo.md
+
+# Run-backed baseline stores (regenerate via scripts/run_study_baseline.py)
+workspace/studies/*/runs.db
+workspace/studies/*/baseline-*/

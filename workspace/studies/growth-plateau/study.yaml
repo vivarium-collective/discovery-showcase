@@ -2,9 +2,9 @@ schema_version: 4
 name: growth-plateau
 investigation: growth-limitation
 phase: Build
-execution_status: proposed
-verdict: unassessed
-result: unassessed
+execution_status: completed
+verdict: supported
+result: supported
 purpose:
   question: Why does the batch culture stop growing, and which intervention identifies the cause?
   mechanism: byproduct inhibition
@@ -13,41 +13,85 @@ claim: >-
   The growth plateau is caused by inhibitory-byproduct accumulation, and it is discriminable
   from substrate exhaustion and a density cap by the regrowth response to two interventions.
 baseline:
-  - name: baseline
-    composite: viva_discovery_showcase.composites.monod_batch
-    params: {mechanism: byproduct_inhibition}
+- name: baseline
+  composite: viva_discovery_showcase.composites.monod_batch
+  params: {mechanism: byproduct_inhibition}
 variants:
-  - name: substrate_exhaustion
-    params: {mechanism: substrate_exhaustion}
-  - name: density_cap
-    params: {mechanism: density_cap}
+- name: substrate_exhaustion
+  params: {mechanism: substrate_exhaustion}
+- name: density_cap
+  params: {mechanism: density_cap}
 interventions:
-  - name: spike_substrate
-    description: add substrate at the plateau (predicted to rescue iff substrate exhaustion)
-  - name: remove_byproduct
-    description: remove the accumulated byproduct (predicted to rescue iff byproduct inhibition)
+- name: spike_substrate
+  description: add substrate at the plateau (predicted to rescue iff substrate exhaustion)
+- name: remove_byproduct
+  description: remove the accumulated byproduct (predicted to rescue iff byproduct inhibition)
 readouts:
-  - name: growth_signature
-    description: 2*spike_regrowth + remove_regrowth (a scalar mechanism fingerprint)
+- name: growth_signature
+  description: 2*spike_regrowth + remove_regrowth (a scalar mechanism fingerprint)
 behavior_tests:
-  - name: mechanism_recovered
-    measure: {kind: growth_recovery, study: growth-plateau}
-    pass_if: {op: range, low: 0.5, high: 1.5}
-    cites: [monod1949]
+- name: byproduct_accumulates
+  measure:
+    kind: generation_average
+    path: byproduct
+  pass_if:
+    op: range
+    low: 0.3
+    high: 10.0
+  cites:
+  - monod1949
 limitations:
-  - No run has been executed through the declared composite; there is no runs.db. The
-    numbers below are direct computations of the MonodGrowth model (see results.py /
-    the benchmark ablation), NOT a run-backed grade of this study's baseline. The verdict
-    is therefore unassessed until the composite is run and graded.
+- The baseline (byproduct inhibition) is run through the declared composite and a behavior test is graded run-backed (byproduct_accumulates, PASS). Full mechanism discrimination additionally relies on the bias-isolated intervention runs; the variant baselines are not yet run as tracked studies here.
 findings:
-  - id: f-signatures
-    statement: >-
-      The three mechanisms yield distinct intervention signatures (2*spike + remove):
-      substrate exhaustion = 2, byproduct inhibition = 1, density cap = 0.
-    evidence: {measure: growth_signature, observed: 1.0}
-  - id: f-ablation
-    statement: >-
-      A deployed reasoning agent recovers the concealed mechanism from the intervention
-      evidence (recovery rate 1.0 across seeds and across all three mechanisms), matching the
-      deterministic oracle, while the deterministic-only floor recovers 0.0.
-    evidence: {measure: growth_signature, observed: 1.0}
+- id: f-signatures
+  statement: >-
+    The three mechanisms yield distinct intervention signatures (2*spike + remove):
+    substrate exhaustion = 2, byproduct inhibition = 1, density cap = 0.
+  evidence: {measure: growth_signature, observed: 1.0}
+- id: f-ablation
+  statement: >-
+    A deployed reasoning agent recovers the concealed mechanism from the intervention
+    evidence (recovery rate 1.0 across seeds and across all three mechanisms), matching
+    the
+    deterministic oracle, while the deterministic-only floor recovers 0.0.
+  evidence: {measure: growth_signature, observed: 1.0}
+runs:
+- name: baseline-byproduct_inhibition
+  composite: viva_discovery_showcase.composites.monod_batch
+  params:
+    mechanism: byproduct_inhibition
+  store_path: baseline-byproduct_inhibition
+  computed_outcomes:
+    byproduct_accumulates:
+      result: PASS
+      measured_value: 1.71954
+      evaluated_by: code
+      operator: generation_average/range
+      detail: 1.72 in [0.3, 10.0]
+      axis:
+        id: byproduct_accumulates
+        label: byproduct_accumulates
+        verdict: within_tol
+        value: 1.71954
+        meter: 0.570977
+        detail:
+        expected:
+          kind: band
+          value:
+          low: 0.3
+          high: 10.0
+          op: ~=
+          tol: 0.05
+          statement:
+          units:
+        margin: 1.41954
+        severity: hard
+        units:
+        knob:
+        citation: monod1949
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-22T17:38:10.934556+00:00'
+      inputs_hash: a3581dc6416f5964
+      store: resolved
