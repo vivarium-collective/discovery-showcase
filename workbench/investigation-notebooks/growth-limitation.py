@@ -309,4 +309,4 @@ else:
 #
 # | test | measures | passes if |
 # | --- | --- | --- |
-# | mechanism_recovered | kind=growth_recovery study=growth-plateau | op range low 0.5 high 1.5 |
+# | byproduct_accumulates | kind=generation_average path=byproduct | op range low 0.3 high 10.0 |
