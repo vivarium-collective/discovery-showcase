@@ -1,0 +1,20 @@
+{
+  "condition": "B",
+  "seed": 0,
+  "chosen_interventions": [
+    "spike_substrate",
+    "remove_byproduct",
+    "dilution_control"
+  ],
+  "off_menu_interventions": [],
+  "discrimination": 1.0,
+  "cost": 3,
+  "fully_discriminating": true,
+  "is_minimal_optimal": false,
+  "avoided_decoy": false,
+  "optimal": [
+    "spike_substrate",
+    "remove_byproduct"
+  ],
+  "transcript": "/Users/eranagmon/code/discovery-showcase/workspace/reports/condition-b/transcript-design-seed0.jsonl"
+}

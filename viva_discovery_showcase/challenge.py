@@ -125,3 +125,30 @@ def score_run(manifest: dict, sealed_truth: dict, run_dir: Path, *, seed: int = 
                           (("truth_leaked", leaked), ("engine_score_divergence", not agrees)) if bad],
     }
     return {"scoring": scoring, "integrity": integrity}
+
+
+def score_design_run(run_dir, *, seed: int = 0) -> dict:
+    """Independently score a Condition-B design run: re-derive discrimination from the chosen set,
+    flag disagreement with the run's own claim, and flag any off-menu (fabricated) intervention."""
+    from viva_discovery_showcase.design import INTERVENTIONS, discrimination_score, optimal_design
+    run_dir = Path(run_dir)
+    rpath = run_dir / f"run-record-design-seed{seed}.json"
+    rec = json.loads(rpath.read_text()) if rpath.is_file() else {}
+    chosen = [i for i in (rec.get("chosen_interventions") or []) if i in INTERVENTIONS]
+    disc = discrimination_score(chosen)                      # independent re-derivation
+    claimed = rec.get("discrimination")
+    agrees = claimed is None or abs(float(claimed) - disc) < 1e-9
+    off_menu = rec.get("off_menu_interventions") or []
+    scoring = {
+        "condition": "B", "chosen_interventions": chosen, "discrimination": disc,
+        "fully_discriminating": disc >= 1.0,
+        "minimal_optimal": set(chosen) == set(optimal_design()),
+        "scored_independently": True,
+    }
+    integrity = {
+        "off_menu_interventions": off_menu,
+        "run_claim_agrees_with_independent_score": bool(agrees),
+        "hard_failures": [m for m, bad in (("off_menu_intervention", bool(off_menu)),
+                                           ("design_score_divergence", not agrees)) if bad],
+    }
+    return {"scoring": scoring, "integrity": integrity}
