@@ -83,6 +83,42 @@ def build_hook(implemented_mechanism: str):
     return hook
 
 
+def real_build_hook(cmd: str | None = None, *, timeout: float = 600):
+    """A build hook that asks a real reasoning filler (``cmd`` or ``$VIVA_FILLER_CMD``) which
+    mechanism to implement, then builds it via :func:`build_hook` (the growth_recovery study).
+
+    The engine's own ``recovery_build.real_build_hook`` can't be reused here: it hardcodes the
+    toy build hook + toy evaluator. This mirrors its contract (gap JSON on stdin; the filler
+    prints ``{"implements": "<mech>"}`` or ``{"artifact": {"mechanism": "<mech>"}}``) but routes
+    the chosen mechanism into our real-model-graded build. A reply naming no mechanism leaves the
+    gap unbuilt --- an honest abstention.
+    """
+    import json
+    import os
+    import subprocess
+
+    command = cmd or os.environ.get("VIVA_FILLER_CMD")
+
+    def hook(gap: dict, ws_root) -> dict:
+        if not command:
+            return {"status": "needs_implementation", "gap_id": gap.get("id"),
+                    "detail": "no fill command configured ($VIVA_FILLER_CMD unset)"}
+        try:
+            proc = subprocess.run(command, shell=True, input=json.dumps(gap, default=str),
+                                  capture_output=True, text=True, timeout=timeout)
+            doc = json.loads((proc.stdout or "").strip() or "{}")
+        except Exception as e:  # noqa: BLE001 — a bad filler must not crash the build drain
+            return {"status": "needs_implementation", "gap_id": gap.get("id"),
+                    "detail": f"fill command failed: {type(e).__name__}: {e}"}
+        mech = doc.get("implements") or (doc.get("artifact") or {}).get("mechanism")
+        if not mech or not str(mech).strip():
+            return {"status": "needs_implementation", "gap_id": gap.get("id"),
+                    "detail": "filler named no mechanism (abstain)"}
+        return build_hook(str(mech).strip())(gap, ws_root)
+
+    return hook
+
+
 def build(ws_root, *, mechanism: str = "byproduct_inhibition", name: str = "growth-limitation",
           implements: str | None = None) -> BenchmarkProviderBundle:
     """Author the growth-limitation scenario under ``ws_root`` and return the provider bundle.
