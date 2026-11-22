@@ -95,14 +95,35 @@ def _ask_backend(obs: dict) -> str | None:
     return _match_mechanism(proc.stdout)
 
 
+def _ask_backend_design() -> list:
+    from viva_discovery_showcase.design import INTERVENTIONS, design_prompt
+    cmd = os.environ.get("AGENT_BACKEND_CMD", "claude -p")
+    try:
+        proc = subprocess.run(cmd, shell=True, input=design_prompt(),
+                              capture_output=True, text=True, timeout=600)
+    except Exception:
+        return []
+    low = (proc.stdout or "").lower()
+    return [i for i in INTERVENTIONS if i in low]
+
+
 def main(argv=None) -> int:
     argv = sys.argv[1:] if argv is None else argv
+    self_test = "--self-test" in argv or os.environ.get("AGENT_FILLER_SELFTEST") == "1"
+
+    if "--design" in argv:
+        # Episode 03: choose the discriminating interventions (before running anything).
+        _ = sys.stdin.read()
+        from viva_discovery_showcase.design import optimal_design
+        chosen = optimal_design() if self_test else _ask_backend_design()
+        print(json.dumps({"interventions": chosen}))
+        return 0
+
     _ = sys.stdin.read()  # drain the gap/request JSON (contract; not used for the answer)
     obs = _load_observation()
     if obs is None:
         print(json.dumps({}))  # no evidence -> name no mechanism -> abstain
         return 0
-    self_test = "--self-test" in argv or os.environ.get("AGENT_FILLER_SELFTEST") == "1"
     mech = _infer_deterministic(obs) if self_test else _ask_backend(obs)
     print(json.dumps({"implements": mech} if mech else {}))
     return 0
