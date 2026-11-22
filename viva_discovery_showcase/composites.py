@@ -15,7 +15,9 @@ _BIG = 1e12  # finite stand-in for "off" (K_I / X_cap); REFERENCE_PRESETS use in
 
 def _params(mechanism: str) -> dict:
     preset = REFERENCE_PRESETS[MECHANISM_LABELS.get(mechanism, mechanism)]
-    return {k: (_BIG if v == float("inf") else v) for k, v in preset.items()}
+    out = {k: (_BIG if v == float("inf") else v) for k, v in preset.items()}
+    out.setdefault("n_I", 1.0)  # only the byproduct preset sets a Hill coefficient; others: classic term
+    return out
 
 
 @composite_generator(
