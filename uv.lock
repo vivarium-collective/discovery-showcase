@@ -2555,7 +2555,7 @@ source = { git = "https://github.com/vivarium-collective/viva-marketplace.git?re
 [[package]]
 name = "viva-discovery-engine"
 version = "0.7.5"
-source = { git = "https://github.com/vivarium-collective/discovery-engine.git?branch=main#c971a910036c85a188e49b879ab4e5a1d58e6462" }
+source = { git = "https://github.com/vivarium-collective/discovery-engine.git?branch=main#4cb6e0a37e079fd6999010c77a9c15c58b025488" }
 dependencies = [
     { name = "bigraph-schema" },
     { name = "click" },

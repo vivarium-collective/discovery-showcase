@@ -11,6 +11,8 @@ question: >-
   growth, and which single intervention discriminates the explanations?
 
 fixture:
+  # Workspace provider: build(ws_root) -> BenchmarkProviderBundle (discovery-engine #163).
+  provider: viva_discovery_showcase.benchmark_provider:build
   # Hidden-truth generator; one of {substrate, byproduct, decoy} per instance.
   reference_model: oracle/viva_discovery_showcase.growth:MonodGrowth
   candidate_model: models/monod_baseline              # mis-specified: no plateau mechanism
