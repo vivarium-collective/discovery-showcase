@@ -1,0 +1,6 @@
+# SEALED ground truth — read only by the independent scorer, never by the engine run.
+# The engine's --resources points at workspace/references/expert/growth-limitation/, not here.
+challenge_id: growth-plateau-H2-001
+true_mechanism: byproduct_inhibition
+true_params: {K_I: 1.0, n_I: 8.0}
+discriminating_signature: {substrate_spike: no_regrowth, remove_byproduct: regrowth}

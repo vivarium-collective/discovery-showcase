@@ -1,0 +1,19 @@
+# Challenge manifest (harness-level contract; not an engine schema). Runs on the engine's
+# existing --goal / --resources / --transcript flags (discovery-engine #188).
+challenge_id: growth-plateau-H2-001
+initial_snapshot: "sha256:pending"            # content hash of the clean workspace snapshot
+scientific_goal: "Explain the observed growth plateau."
+resources:
+  allowlist: [model_contracts, observations, literature]
+  dir: workspace/references/expert/growth-limitation   # the --resources dir (no sealed truth here)
+interventions: [substrate_spike, remove_byproduct, dilution]
+engine:
+  revision: "pending"                         # discovery-engine git sha at run time
+  policy: benchmark_authorized
+budget: {iterations: 20, simulations: 12, model_builds: 3, generation_calls: 16}
+agent: {provider: anthropic, model: "claude -p", config: "pending"}
+prompt_id: neutral-v1
+scoring:
+  sealed_truth_ref: ".sealed/truth.yaml"      # scorer-only; outside the resources allowlist
+  scorer: growth-v1
+outputs: [events, investigation, models, runs, evidence, transcript]
