@@ -49,6 +49,10 @@ dashboard = [
 # the reports and the dashboard, so they need it too.
 dev = ["pytest>=7.4", "discovery-showcase[dashboard]"]
 cli = ["typer", "rich"]
+# Real multiscale simulation methods from the viva- ecosystem the engine can discover and
+# compose: spatio-flux (spatial dFBA + diffusion, a multiscale composite) and its FBA backend
+# (cobra) + particle physics (pymunk). Install with `uv pip install -e ".[spatial]"`.
+spatial = ["cobra>=0.29", "pymunk>=7.0", "spatio-flux"]
 
 [project.scripts]
 discovery-showcase = "viva_discovery_showcase.cli.__main__:main"
@@ -82,3 +86,4 @@ packages = ["viva_discovery_showcase"]
 [tool.uv.sources]
 vivarium-workbench = { git = "https://github.com/vivarium-collective/vivarium-workbench.git", branch = "main" }
 viva-discovery-engine = { git = "https://github.com/vivarium-collective/discovery-engine.git", branch = "main" }
+spatio-flux = { git = "https://github.com/vivarium-collective/spatio-flux.git", branch = "main" }
