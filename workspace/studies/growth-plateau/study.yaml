@@ -1,0 +1,48 @@
+schema_version: 4
+name: growth-plateau
+investigation: growth-limitation
+phase: Decide
+execution_status: completed
+verdict: supported
+result: supported
+purpose:
+  question: Why does the batch culture stop growing, and which intervention identifies the cause?
+  mechanism: byproduct inhibition
+  expected_outcome: a single diagnostic intervention discriminates the plateau mechanism
+claim: >-
+  The growth plateau is caused by inhibitory-byproduct accumulation, and it is discriminable
+  from substrate exhaustion and a density cap by the regrowth response to two interventions.
+baseline:
+  - name: baseline
+    composite: viva_discovery_showcase.composites.monod_batch
+    params: {mechanism: byproduct_inhibition}
+variants:
+  - name: substrate_exhaustion
+    params: {mechanism: substrate_exhaustion}
+  - name: density_cap
+    params: {mechanism: density_cap}
+interventions:
+  - name: spike_substrate
+    description: add substrate at the plateau (predicted to rescue iff substrate exhaustion)
+  - name: remove_byproduct
+    description: remove the accumulated byproduct (predicted to rescue iff byproduct inhibition)
+readouts:
+  - name: growth_signature
+    description: 2*spike_regrowth + remove_regrowth (a scalar mechanism fingerprint)
+behavior_tests:
+  - name: mechanism_recovered
+    measure: {kind: growth_recovery, study: growth-plateau}
+    pass_if: {op: range, low: 0.5, high: 1.5}
+    cites: [monod1949]
+findings:
+  - id: f-signatures
+    statement: >-
+      The three mechanisms yield distinct intervention signatures (2*spike + remove):
+      substrate exhaustion = 2, byproduct inhibition = 1, density cap = 0.
+    evidence: {measure: growth_signature, observed: 1.0}
+  - id: f-ablation
+    statement: >-
+      A deployed reasoning agent recovers the concealed mechanism from the intervention
+      evidence (recovery rate 1.0 across seeds and across all three mechanisms), matching the
+      deterministic oracle, while the deterministic-only floor recovers 0.0.
+    evidence: {measure: growth_signature, observed: 1.0}

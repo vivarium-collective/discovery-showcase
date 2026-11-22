@@ -1,0 +1,22 @@
+name: growth-limitation
+slug: growth-limitation
+title: Growth limitation — what stops a batch culture, and can the engine recover it?
+question: >-
+  What makes a batch culture stop growing, and can the discovery engine recover the
+  mechanism from a discriminating intervention?
+studies:
+  - growth-plateau
+acceptance_criteria:
+  - id: ac-recovery
+    statement: The engine recovers the concealed plateau mechanism from intervention evidence.
+    study: growth-plateau
+    behavior: mechanism_recovered
+    status: passing
+hypotheses:
+  - id: h1
+    statement: substrate exhaustion (the limiting nutrient is used up)
+  - id: h2
+    statement: byproduct inhibition (an inhibitory byproduct accumulates)
+  - id: h3
+    statement: density cap (a quorum/space limit; the decoy, separable by neither arm)
+verdict: supported
