@@ -1,0 +1,14 @@
+{
+  "level": "E05c",
+  "capability": "model construction",
+  "answer": "product_feedback_inhibition",
+  "correct": true,
+  "heldout_error": {
+    "baseline": 1.3251139342735119,
+    "param_refit": 0.08775258265362791,
+    "structural": 0.004673192918285625
+  },
+  "recovered_Ki": 2.0125,
+  "true_Ki": 2.0,
+  "transcript": "/Users/eranagmon/code/discovery-showcase/workspace/reports/episode05/transcript-E05c-seed0.jsonl"
+}
