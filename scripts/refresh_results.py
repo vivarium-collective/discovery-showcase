@@ -148,6 +148,16 @@ def append_log(snap: dict) -> None:
         f.write(row)
 
 
+def _clean_strays() -> None:
+    """Remove any stray ``baseline-*`` run stores materialized at the repo root (a study's
+    relative ``store_path`` resolved against cwd by publish/probe). Real stores live under
+    ``workspace/studies/*/``."""
+    import shutil
+    for p in REPO.glob("baseline-*"):
+        if p.is_dir() and (p / "history").exists():
+            shutil.rmtree(p, ignore_errors=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--live", action="store_true", help="use claude -p as the isolation filler")
@@ -156,6 +166,7 @@ def main() -> int:
     snap = collect_snapshot(live=a.live)
     write_snapshot(snap)
     append_log(snap)
+    _clean_strays()  # publish/probe can materialize a study's relative store at the repo root
     print("snapshot:", json.dumps({k: snap[k] for k in ("recovery_rate", "run_backed", "engine_probe_stop_reason")}, default=str))
     print(f"wrote {PAPER/'results_snapshot.tex'} + .json; logged to {LOG}")
     if not a.no_assets:

@@ -10,7 +10,10 @@ from viva_discovery_showcase.baseline_run import run_baseline
 from discovery_engine.study.evaluator.outcomes import compute_outcomes
 
 
-def test_end_state_test_grades_code_passing(tmp_path):
+def test_end_state_test_grades_code_passing(tmp_path, monkeypatch):
+    # Run from a clean cwd: the engine's resolve_run_store tries a relative store_path against cwd
+    # first, so a stray baseline-* dir in the repo root would otherwise shadow the real store.
+    monkeypatch.chdir(tmp_path)
     sd = tmp_path / "workspace" / "studies" / "s"
     sd.mkdir(parents=True)
     (tmp_path / "workspace.yaml").write_text("name: t\n")  # ws marker for evaluator loading
