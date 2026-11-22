@@ -303,6 +303,23 @@ if RERUN:
 else:
     print("RERUN=False — not re-simulating.")
 
+# ### Visualizations
+#
+# _Results are shown by the figures below, produced by the run above._
+
+# **byproduct_evidence**
+
+def _save_viz(study, slug, html):
+    d = REPO / 'reports/notebooks/figures' / study
+    d.mkdir(parents=True, exist_ok=True)
+    out = d / (slug + '.html')
+    out.write_text(html, encoding='utf-8')
+    print('  wrote', out)
+
+
+# byproduct_evidence
+_save_viz('growth-plateau', 'byproduct_evidence', _render_one('image:byproduct_evidence.png', {}, RUNS_DB, STUDY_YAML))
+
 # ### Acceptance criteria
 #
 # _Pre-registered checks (criteria/thresholds only — run the cells above to evaluate them)._
