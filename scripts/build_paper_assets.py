@@ -276,8 +276,13 @@ def export_discovery_figures(paper: Path) -> None:
         V.render_run_backed_observables(r["store"], figdir / "fig_run_backed_observables.pdf",
                                         graded_value=1.72)
         V.render_composite_diagram(figdir / "fig_monod_composite.pdf")
+        # Main-text figures (replacing the Fig1/2/3 placeholders): the architecture schematic,
+        # the discovery cycle on the real growth-limitation trace, and the Episode 05 model revision.
+        V.render_architecture_overview(figdir / "Fig1.pdf")
+        V.render_cycle_diagram(figdir / "Fig2.pdf")
+        V.render_model_revision(figdir / "Fig3.pdf")
         print(f"discovery figures: investigation graph ({len(linkage['nodes'])} nodes), "
-              f"run-backed observables, composite -> {figdir}")
+              f"run-backed observables, composite, + Fig1/2/3 (architecture, cycle, model revision) -> {figdir}")
     except Exception as e:  # noqa: BLE001 — never block the rest of the assembly
         print(f"discovery figures: skipped ({type(e).__name__}: {e})")
 
