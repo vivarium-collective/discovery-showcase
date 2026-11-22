@@ -1,0 +1,92 @@
+schema_version: 4
+name: particle-colony
+investigation: agent-based-colony
+phase: Build
+execution_status: completed
+verdict: supported
+result: supported
+purpose:
+  question: Do particles carrying their own metabolism grow in biomass and proliferate by division?
+  mechanism: agent-based particles, each carrying a flux-balance metabolism, moving by Brownian motion in a diffusing field and dividing past a mass threshold
+  expected_outcome: population biomass rises and particles divide, growing a colony
+claim: >-
+  An agent-based colony — particles each carrying their own flux-balance metabolism, moving by
+  Brownian motion through a diffusing field — grows in biomass and proliferates by division.
+baseline:
+- name: baseline
+  composite: spatio_flux.composites.particles.br_particles_dfba
+  params: {}
+behavior_tests:
+- name: biomass_grows
+  measure: {kind: generation_average, path: total_mass}
+  pass_if: {op: range, low: 0.2, high: 1000.0}
+- name: colony_proliferates
+  measure: {kind: generation_average, path: n_particles}
+  pass_if: {op: range, low: 0.9, high: 1000.0}
+runs:
+- name: particle-colony
+  composite: spatio_flux.composites.particles.br_particles_dfba
+  params: {}
+  store_path: particle-colony
+  computed_outcomes:
+    biomass_grows:
+      result: PASS
+      measured_value: 6.00385
+      evaluated_by: code
+      operator: generation_average/range
+      detail: 6.004 in [0.2, 1000.0]
+      axis:
+        id: biomass_grows
+        label: biomass_grows
+        verdict: within_tol
+        value: 6.00385
+        meter: 0.502901925
+        detail:
+        expected:
+          kind: band
+          value:
+          low: 0.2
+          high: 1000.0
+          op: ~=
+          tol: 0.05
+          statement:
+          units:
+        margin: 5.80385
+        severity: hard
+        units:
+        knob:
+        citation:
+      reconcile: no_authored
+    colony_proliferates:
+      result: PASS
+      measured_value: 6.89474
+      evaluated_by: code
+      operator: generation_average/range
+      detail: 6.895 in [0.9, 1000.0]
+      axis:
+        id: colony_proliferates
+        label: colony_proliferates
+        verdict: within_tol
+        value: 6.89474
+        meter: 0.50299737
+        detail:
+        expected:
+          kind: band
+          value:
+          low: 0.9
+          high: 1000.0
+          op: ~=
+          tol: 0.05
+          statement:
+          units:
+        margin: 5.994739999999999
+        severity: hard
+        units:
+        knob:
+        citation:
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-22T23:35:52.229092+00:00'
+      inputs_hash: 1fde3505f1a59f9d
+      store: resolved

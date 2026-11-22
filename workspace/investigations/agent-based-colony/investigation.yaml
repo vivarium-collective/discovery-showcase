@@ -1,0 +1,19 @@
+name: agent-based-colony
+slug: agent-based-colony
+title: Agent-based colony — do particles carrying their own metabolism grow and divide into a colony?
+question: >-
+  When each cell is an explicit particle carrying its own flux-balance metabolism, moving by
+  Brownian motion through a diffusing nutrient field, does the population grow in biomass and
+  proliferate by division into a colony?
+studies:
+  - particle-colony
+acceptance_criteria:
+  - id: ac-proliferates
+    statement: The particle colony grows in biomass and proliferates by division.
+    study: particle-colony
+    behavior: colony_proliferates
+    status: in-progress
+hypotheses:
+  - id: h1
+    statement: each particle's metabolism grows its mass; past a threshold it divides, so the population biomass rises and particle count increases
+verdict: unassessed
