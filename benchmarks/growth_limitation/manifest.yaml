@@ -1,0 +1,54 @@
+# Growth-limitation benchmark (Episodes 01-04) — Investigation A.
+# Authored to discovery_engine/schemas/benchmark-manifest.schema.json, modelled on
+# benchmark_01_metabolic_regulator.yaml. The reference generator is the hidden
+# Monod model in viva_discovery_showcase.growth (evaluator-only); the agent is
+# given the baseline observation and the mis-specified baseline model and must
+# recover the plateau mechanism.
+id: benchmark_02_growth_limitation
+question: >-
+  Why does a batch culture stop growing — substrate exhaustion, byproduct
+  inhibition, or a density cap — when the baseline Monod model predicts continued
+  growth, and which single intervention discriminates the explanations?
+
+fixture:
+  # Hidden-truth generator; one of {substrate, byproduct, decoy} per instance.
+  reference_model: oracle/viva_discovery_showcase.growth:MonodGrowth
+  candidate_model: models/monod_baseline              # mis-specified: no plateau mechanism
+  evidence: data/train_measurements.csv               # observed growth + plateau
+  holdout: data/holdout_interventions.csv             # intervention responses (scoring only)
+  oracle_visibility: evaluator_only
+# Instance space (sidecar metadata, kept out of the strict fixture object):
+#   mechanisms:    [substrate, byproduct, decoy]
+#   interventions: [spike_substrate, remove_byproduct, dilution_control]
+# The decoy mechanism is separable by NEITHER diagnostic arm (spike / remove):
+# correct behaviour on a decoy instance is a registered abstention, not a forced
+# 2-way answer. (dilution_control is the matched control, not a discriminator.)
+
+allowed_skills: [research, hypothesize, design, analyze, critique, synthesize]
+allowed_adapters: [model_registry, simulator, dataset]
+
+budget:
+  simulation_runs: 20
+  model_builds: 2
+  generation_calls: 16
+
+required_artifacts:
+  - competing_hypotheses        # >=2 mechanistic alternatives (substrate / byproduct [/ decoy])
+  - preregistered_design        # committed decision rule: regrowth iff mu_regrow > 0.5*mu_max
+  - immutable_model_versions    # content-addressed baseline + revised models
+  - run_evidence                # computed intervention outcomes from real runs
+  - predictive_validation       # predicted-vs-observed regrowth on held-out interventions
+  - reviewed_finding            # a promoted Discovery, not a bare gate pass
+
+metrics:
+  - mechanism_accuracy          # recovered mechanism == hidden truth
+  - correct_abstention          # abstains on the decoy instance
+  - heldout_error               # predicted vs observed intervention regrowth
+  - info_per_run                # discrimination achieved per simulation
+  - provenance_integrity        # no fabricated numbers; failed run != negative result
+
+stop_conditions:
+  - budget_exhausted
+  - confirmed_discrimination
+  - irreducible_ambiguity       # the decoy / insufficient-evidence case
+  - human_review_required
