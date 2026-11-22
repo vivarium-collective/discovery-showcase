@@ -1,0 +1,16 @@
+{
+  "investigation": "growth-limitation",
+  "sealed_mechanism": "byproduct_inhibition",
+  "seed": 0,
+  "evidence_shown_to_agent": {
+    "spike_regrowth": false,
+    "remove_regrowth": true
+  },
+  "resources_dir": "/Users/eranagmon/code/discovery-showcase/workspace/references/expert/growth-limitation",
+  "filler_cmd": "/Users/eranagmon/code/discovery-showcase/.venv/bin/python /Users/eranagmon/code/discovery-showcase/scripts/isolated_filler.py",
+  "earned_recovery": true,
+  "heldout_error": 0.0,
+  "ran": true,
+  "transcript": "/Users/eranagmon/code/discovery-showcase/workspace/reports/isolated-runs/transcript-byproduct_inhibition-seed0.jsonl",
+  "transcript_entries": 1
+}
