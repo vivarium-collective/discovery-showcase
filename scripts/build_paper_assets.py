@@ -49,6 +49,27 @@ def _records() -> list[Path]:
     return sorted(d for d in REPORTS_DIR.glob("*") if (d / "report.pdf").is_file())
 
 
+
+
+def build_isolated_run_records(paper):
+    """Render each bias-isolated run (workspace/reports/isolated-runs) as a PDF + return summary rows."""
+    import json as _json
+    from viva_discovery_showcase import results as R
+    src = REPO / "workspace" / "reports" / "isolated-runs"
+    dest = paper / "appendix_reports"
+    dest.mkdir(parents=True, exist_ok=True)
+    rows, pdfs = [], []
+    for rjson in sorted(src.glob("run-record-*.json")):
+        rec = _json.loads(rjson.read_text())
+        mech, seed = rec["sealed_mechanism"], rec["seed"]
+        tpath = src / f"transcript-{mech}-seed{seed}.jsonl"
+        pdf = dest / f"isolated-run-{mech}-seed{seed}.pdf"
+        R.render_isolated_run(rjson, tpath, pdf)
+        pdfs.append(pdf.name)
+        rows.append((mech, seed, rec["earned_recovery"], rec["heldout_error"]))
+    return rows, pdfs
+
+
 def build_appendix(paper: Path) -> None:
     """Collect every record's report.pdf into the paper appendix + write appendix.tex."""
     dest = paper / "appendix_reports"
@@ -68,6 +89,14 @@ def build_appendix(paper: Path) -> None:
         lines.append(r"\clearpage")
         lines.append(rf"\section*{{Record {ts}}}")
         lines.append(rf"\includepdf[pages=-,scale=0.92,pagecommand={{}}]{{appendix_reports/report_{ts}.pdf}}")
+    rows, iso_pdfs = build_isolated_run_records(paper)
+    if iso_pdfs:
+        lines.append(r"\clearpage")
+        lines.append(r"\section*{Bias-isolated engine run records}")
+        lines.append(r"The ground truth was sealed from the agent; it reasoned from evidence + resources and the engine graded the result.")
+        for name in iso_pdfs:
+            lines.append(r"\clearpage")
+            lines.append(rf"\includepdf[pages=-,scale=0.92,pagecommand={{}}]{{appendix_reports/{name}}}")
     lines.append(r"\end{document}")
     (paper / "appendix.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"appendix: {len(records)} record(s) -> {paper/'appendix.tex'}")

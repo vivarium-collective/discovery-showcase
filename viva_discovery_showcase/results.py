@@ -165,3 +165,31 @@ def render_report(results, outpath) -> Path:
             f = fn(results)
             pdf.savefig(f, bbox_inches="tight"); plt.close(f)
     return out
+
+
+# --- Bias-isolated run records (paper documentation) -------------------------
+def render_isolated_run(record_path, transcript_path, outpath) -> "Path":
+    """Render one bias-isolated run (record + transcript) as a one-page PDF for the appendix."""
+    import json as _json
+    rec = _json.loads(Path(record_path).read_text())
+    entries = [_json.loads(l) for l in Path(transcript_path).read_text().splitlines() if l.strip()] \
+        if Path(transcript_path).exists() else []
+    prompt = (entries[0].get("prompt") if entries else "") or ""
+    response = (entries[0].get("response") if entries else "") or ""
+    out = Path(outpath); out.parent.mkdir(parents=True, exist_ok=True)
+    fig = plt.figure(figsize=(8.5, 11))
+    fig.text(0.5, 0.95, "Bias-isolated run record", ha="center", size=15, weight="bold")
+    fig.text(0.5, 0.92, f"sealed mechanism: {rec['sealed_mechanism']}  ·  seed {rec['seed']}",
+             ha="center", size=10, color="#555")
+    body = (
+        f"EARNED RECOVERY: {rec['earned_recovery']}   (held-out error {rec['heldout_error']})\n"
+        f"The sealed mechanism was evaluator-only — never shown to the agent.\n\n"
+        f"Evidence shown to the agent (the experimental result):\n  {rec['evidence_shown_to_agent']}\n\n"
+        f"Knowledge resources: {rec['resources_dir']}\n"
+        f"Agent (filler): {rec['filler_cmd']}\n\n"
+        "=== Controlled prompt (recorded) ===\n" + prompt[:1600] + "\n\n"
+        "=== Agent response (recorded) ===\n" + response[:400]
+    )
+    fig.text(0.07, 0.87, body, ha="left", va="top", size=8.5, family="monospace", wrap=True)
+    fig.savefig(out, bbox_inches="tight"); plt.close(fig)
+    return out

@@ -154,6 +154,58 @@ MECHANISM_LABELS = {
     "byproduct_inhibition": "byproduct",
     "density_cap": "decoy",
 }
+# Accept either the public mechanism name or the preset name in process_contract.
+MECHANISM_LABELS_INV = {v: k for k, v in MECHANISM_LABELS.items()}
+MECHANISM_LABELS_INV.update({k: k for k in MECHANISM_LABELS})
+
+
+# --- Process contract: a model DECLARES its mechanism + expectations ---------
+# The legitimate channel by which a model tells an agent what it implements and
+# what to expect under the diagnostic interventions. The agent READS this to
+# reason about a candidate model --- it is NOT the sealed ground truth (which
+# model generated the observed data); that is earned by matching the declared
+# expectations against evidence.
+MECHANISM_SUMMARY = {
+    "substrate_exhaustion": "growth stops when the limiting substrate is exhausted",
+    "byproduct_inhibition": "growth stops when an inhibitory byproduct accumulates past K_I "
+                            "while substrate remains plentiful",
+    "density_cap": "growth stops at a density/quorum cap, with substrate plentiful and no "
+                   "inhibitory byproduct",
+}
+MECHANISM_EXPECTATIONS = {
+    "substrate_exhaustion": {"spike_substrate": "regrowth", "remove_byproduct": "no regrowth"},
+    "byproduct_inhibition": {"spike_substrate": "no regrowth", "remove_byproduct": "regrowth"},
+    "density_cap": {"spike_substrate": "no regrowth", "remove_byproduct": "no regrowth"},
+}
+
+
+def mechanism_from_config(config: dict) -> str:
+    """Which plateau mechanism a MonodGrowth config implements (the binding term)."""
+    K_I = config.get("K_I", INF)
+    X_cap = config.get("X_cap", INF)
+    if math.isfinite(K_I) and K_I < 1e11:
+        return "byproduct_inhibition"
+    if math.isfinite(X_cap) and X_cap < 1e11:
+        return "density_cap"
+    return "substrate_exhaustion"
+
+
+def process_contract(mechanism: str) -> dict:
+    """A model's DECLARED contract: what it implements + what to expect under the
+    diagnostic interventions. The channel the agent reads (not the sealed truth)."""
+    mech = MECHANISM_LABELS_INV.get(mechanism, mechanism)
+    if mech not in MECHANISM_EXPECTATIONS:
+        raise KeyError(f"unknown mechanism: {mechanism}")
+    return {
+        "mechanism": mech,
+        "summary": MECHANISM_SUMMARY[mech],
+        "expected_intervention_response": MECHANISM_EXPECTATIONS[mech],
+    }
+
+
+def candidate_contracts() -> list[dict]:
+    """The declared contracts of all candidate models (what the agent reasons over)."""
+    return [process_contract(m) for m in MECHANISM_EXPECTATIONS]
 
 
 def growth_signature(label: str, *, seed: int = 0) -> float:
@@ -227,6 +279,16 @@ class MonodGrowth(Process):
             "biomass": "overwrite[float]",
             "substrate": "overwrite[float]",
             "byproduct": "overwrite[float]",
+        }
+
+    def describe(self) -> dict:
+        """The process contract: ports + the DECLARED mechanism and expectations this
+        configuration implements. An agent reads this to reason about the model."""
+        mech = mechanism_from_config(self.config)
+        return {
+            "name": "MonodGrowth",
+            "ports": {"biomass": "float (X)", "substrate": "float (S)", "byproduct": "float (P)"},
+            "contract": process_contract(mech),
         }
 
     def update(self, state, interval):

@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 """Bias-isolated, resource-grounded, transcript-recording ``$VIVA_FILLER_CMD``.
 
-A legitimate discovery-engine filler for a real run. It reasons ONLY from:
+A legitimate discovery-engine filler for a real run. It reasons from:
+  - the **candidate model contracts** (each model DECLARES its mechanism + what to expect under
+    the diagnostic interventions — the process contract is the channel the agent reads),
   - the **experimental evidence** in ``$RUN_OBSERVATION`` (the intervention regrowth results
     — what a real experiment would reveal), and
-  - the **knowledge resources** in ``$RESOURCES_DIR`` (general background: candidate mechanisms
-    and how interventions discriminate — NOT which mechanism is operative).
+  - the **knowledge resources** in ``$RESOURCES_DIR`` (general background).
 
-It NEVER reads the sealed ground truth (the hidden mechanism, the reference parameters): the
-generation request on stdin is used only for its ``id``/``kind``, never for any mechanism it
-might carry. Every ``(request, prompt, response, result)`` is appended to ``$RUN_TRANSCRIPT``
-(JSONL) so the controlled inputs and the agent's reasoning are recorded for the paper.
+The agent is EXPECTED to read a model's mechanism from its contract; what stays sealed is the
+**ground truth** — which model generated the observed data — which it earns by matching the
+declared expectations against the evidence (contracts say what to expect; only evidence says
+which model is operative). Every ``(request, prompt, response, result)`` is appended to
+``$RUN_TRANSCRIPT`` (JSONL) so the controlled inputs + reasoning are recorded for the paper.
 """
 from __future__ import annotations
 
@@ -42,19 +44,37 @@ def _observation():
         return None
 
 
-def _prompt(obs, resources) -> str:
+def _contracts() -> list[dict]:
+    """The declared contracts of the candidate models (read from the process contract)."""
+    try:
+        from viva_discovery_showcase.growth import candidate_contracts
+        return candidate_contracts()
+    except Exception:
+        return []
+
+
+def _prompt(obs, resources, contracts) -> str:
     def yn(b):
         return "resumed growth" if b else "did NOT resume growth"
+    contract_lines = "\n".join(
+        f"  - {c['mechanism']}: {c['summary']}.\n"
+        f"      declared expectation: spike substrate -> {c['expected_intervention_response']['spike_substrate']}; "
+        f"remove byproduct -> {c['expected_intervention_response']['remove_byproduct']}."
+        for c in contracts) or "  (no candidate contracts provided)"
     return (
-        "You are diagnosing why a microbial batch culture stopped growing. Use ONLY the "
-        "background knowledge and the experimental evidence below.\n\n"
+        "You are diagnosing which candidate model explains why a microbial batch culture stopped "
+        "growing. Each candidate model declares, in its process contract, its mechanism and what "
+        "to expect under the diagnostic interventions. Read those contracts and match them to the "
+        "observed evidence.\n\n"
+        "=== Candidate model contracts (declared mechanism + expectations) ===\n"
+        + contract_lines + "\n\n"
         "=== Background knowledge ===\n" + (resources or "(none provided)") + "\n\n"
-        "=== Experimental evidence ===\n"
+        "=== Observed experimental evidence ===\n"
         "A batch culture grew then plateaued. Two diagnostic interventions were applied at the plateau:\n"
         f"  - Adding substrate: the culture {yn(obs['spike_regrowth'])}.\n"
         f"  - Removing the accumulated byproduct: the culture {yn(obs['remove_regrowth'])}.\n\n"
-        "Name the single mechanism that stopped growth, reasoning from the evidence and background. "
-        f"Choose exactly one of {list(MECHANISMS)}. Answer with only the mechanism name."
+        "Which candidate's declared expectations does the evidence satisfy? That model is the one "
+        f"that generated the data. Answer with only its mechanism name, one of {list(MECHANISMS)}."
     )
 
 
@@ -93,18 +113,21 @@ def main(argv=None) -> int:
         req = json.loads(sys.stdin.read() or "{}")
     except Exception:
         req = {}
-    req_meta = {"request_id": req.get("id"), "kind": req.get("kind")}  # id/kind only; never the mechanism
+    req_meta = {"request_id": req.get("id"), "kind": req.get("kind")}
     obs = _observation()
     self_test = "--self-test" in argv or os.environ.get("AGENT_FILLER_SELFTEST") == "1"
 
     if obs is None:
+        # Contracts declare what to EXPECT; only evidence says which model is operative.
+        # With no evidence, the agent cannot determine the answer -> abstain.
         _record({"ts": dt.datetime.now().isoformat(), **req_meta, "prompt": None,
-                 "response": None, "result": {}, "note": "no evidence -> abstain"})
+                 "response": None, "result": {}, "note": "no evidence -> abstain (contracts alone are insufficient)"})
         print(json.dumps({}))
         return 0
 
     resources = _resources()
-    prompt = _prompt(obs, resources)
+    contracts = _contracts()
+    prompt = _prompt(obs, resources, contracts)
     if self_test:
         mech, raw = _self_test(obs), "(self-test deterministic reasoner)"
     else:
@@ -112,6 +135,7 @@ def main(argv=None) -> int:
         mech = next((m for m in MECHANISMS if m in raw.lower()), None)
     result = {"implements": mech} if mech else {}
     _record({"ts": dt.datetime.now().isoformat(), **req_meta,
+             "candidate_contracts": [c["mechanism"] for c in contracts],
              "resources_chars": len(resources), "prompt": prompt, "response": raw, "result": result})
     print(json.dumps(result))
     return 0
