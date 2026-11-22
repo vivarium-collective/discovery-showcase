@@ -6,9 +6,11 @@ execution_status: completed
 verdict: supported
 result: supported
 purpose:
-  question: Why does the batch culture stop growing, and which intervention identifies the cause?
+  question: Why does the batch culture stop growing, and which intervention 
+    identifies the cause?
   mechanism: byproduct inhibition
-  expected_outcome: a single diagnostic intervention discriminates the plateau mechanism
+  expected_outcome: a single diagnostic intervention discriminates the plateau 
+    mechanism
 claim: >-
   The growth plateau is caused by inhibitory-byproduct accumulation, and it is discriminable
   from substrate exhaustion and a density cap by the regrowth response to two interventions.
@@ -23,12 +25,15 @@ variants:
   params: {mechanism: density_cap}
 interventions:
 - name: spike_substrate
-  description: add substrate at the plateau (predicted to rescue iff substrate exhaustion)
+  description: add substrate at the plateau (predicted to rescue iff substrate 
+    exhaustion)
 - name: remove_byproduct
-  description: remove the accumulated byproduct (predicted to rescue iff byproduct inhibition)
+  description: remove the accumulated byproduct (predicted to rescue iff 
+    byproduct inhibition)
 readouts:
 - name: growth_signature
-  description: 2*spike_regrowth + remove_regrowth (a scalar mechanism fingerprint)
+  description: 2*spike_regrowth + remove_regrowth (a scalar mechanism 
+    fingerprint)
 behavior_tests:
 - name: byproduct_accumulates
   measure:
@@ -41,7 +46,10 @@ behavior_tests:
   cites:
   - monod1949
 limitations:
-- The baseline (byproduct inhibition) is run through the declared composite and a behavior test is graded run-backed (byproduct_accumulates, PASS). Full mechanism discrimination additionally relies on the bias-isolated intervention runs; the variant baselines are not yet run as tracked studies here.
+- The baseline (byproduct inhibition) is run through the declared composite and 
+  a behavior test is graded run-backed (byproduct_accumulates, PASS). Full 
+  mechanism discrimination additionally relies on the bias-isolated intervention
+  runs; the variant baselines are not yet run as tracked studies here.
 findings:
 - id: f-signatures
   statement: >-
@@ -95,3 +103,8 @@ runs:
       graded_at: '2026-11-22T17:38:10.934556+00:00'
       inputs_hash: a3581dc6416f5964
       store: resolved
+visualizations:
+- name: byproduct_evidence
+  address: image:byproduct_evidence.png
+  title: byproduct accumulation vs the behavior-test band (run-backed)
+  status: final

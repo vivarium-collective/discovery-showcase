@@ -51,6 +51,62 @@ def _records() -> list[Path]:
 
 
 
+def build_investigation_report(paper: Path):
+    """Generate the REAL vivarium-workbench investigation HTML report + its PDF.
+
+    Publishes the workspace to a self-contained static bundle (vivarium-workbench-publish),
+    copies the investigation HTML report into the paper, and renders it to PDF with playwright
+    (served locally so assets resolve). Returns (html_name, pdf_name) or None if unavailable.
+    """
+    import shutil
+    import socket
+    import subprocess
+    import sys
+    import tempfile
+    import time
+
+    dest = paper / "appendix_reports"
+    dest.mkdir(parents=True, exist_ok=True)
+    bundle = Path(tempfile.mkdtemp(prefix="wb-bundle-"))
+    try:
+        subprocess.run(["vivarium-workbench-publish", "--workspace", str(REPO), "--out", str(bundle)],
+                       check=True, capture_output=True, text=True)
+    except Exception as e:  # noqa: BLE001 — publish unavailable: skip, don't block the build
+        print(f"investigation report: publish skipped ({type(e).__name__})")
+        return None
+    html = bundle / "reports" / "investigation-growth-limitation.html"
+    if not html.is_file():
+        print("investigation report: no HTML produced")
+        return None
+    shutil.copy2(html, dest / "investigation-growth-limitation.html")
+    if (bundle / "assets").is_dir():  # keep the HTML viewable from the bundle copy
+        shutil.copytree(bundle / "assets", dest / "assets", dirs_exist_ok=True)
+
+    pdf = dest / "investigation-growth-limitation.pdf"
+    try:
+        s = socket.socket(); s.bind(("127.0.0.1", 0)); port = s.getsockname()[1]; s.close()
+        srv = subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--directory", str(bundle)],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        time.sleep(1.5)
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                b = p.chromium.launch()
+                pg = b.new_page()
+                pg.goto(f"http://127.0.0.1:{port}/reports/investigation-growth-limitation.html",
+                        wait_until="networkidle", timeout=30000)
+                pg.pdf(path=str(pdf), format="A4", print_background=True)
+                b.close()
+        finally:
+            srv.terminate()
+    except Exception as e:  # noqa: BLE001 — PDF optional (needs playwright chromium)
+        print(f"investigation report: PDF skipped ({type(e).__name__}: {e})")
+        print(f"investigation report: HTML -> {dest}")
+        return ("investigation-growth-limitation.html", None)
+    print(f"investigation report: HTML + PDF -> {dest}")
+    return ("investigation-growth-limitation.html", pdf.name)
+
+
 def build_isolated_run_records(paper):
     """Render each bias-isolated run (workspace/reports/isolated-runs) as a PDF + return summary rows."""
     import json as _json
@@ -74,21 +130,20 @@ def build_appendix(paper: Path) -> None:
     """Collect every record's report.pdf into the paper appendix + write appendix.tex."""
     dest = paper / "appendix_reports"
     dest.mkdir(parents=True, exist_ok=True)
-    records = _records()
     lines = [
         r"\documentclass[10pt]{article}",
         r"\usepackage[letterpaper,margin=0.5in]{geometry}",
         r"\usepackage{pdfpages}",
         r"\begin{document}",
-        r"\begin{center}{\Large\textbf{Appendix: Investigation development records}}\\[4pt]",
-        r"A chronological record of the report PDFs each investigation generated as it developed.\end{center}",
+        r"\begin{center}{\Large\textbf{Appendix: Investigation report}}\\[4pt]",
+        r"The vivarium-workbench investigation report for growth-limitation, generated from the "
+        r"workspace record. The HTML report and its assets are collected alongside this PDF.\end{center}",
     ]
-    for d in records:
-        ts = d.name
-        shutil.copy2(d / "report.pdf", dest / f"report_{ts}.pdf")
+    report = build_investigation_report(paper)
+    if report and report[1]:
         lines.append(r"\clearpage")
-        lines.append(rf"\section*{{Record {ts}}}")
-        lines.append(rf"\includepdf[pages=-,scale=0.92,pagecommand={{}}]{{appendix_reports/report_{ts}.pdf}}")
+        lines.append(r"\section*{Investigation report: growth-limitation (vivarium-workbench)}")
+        lines.append(rf"\includepdf[pages=-,pagecommand={{}}]{{appendix_reports/{report[1]}}}")
     rows, iso_pdfs = build_isolated_run_records(paper)
     if iso_pdfs:
         lines.append(r"\clearpage")
@@ -99,7 +154,7 @@ def build_appendix(paper: Path) -> None:
             lines.append(rf"\includepdf[pages=-,scale=0.92,pagecommand={{}}]{{appendix_reports/{name}}}")
     lines.append(r"\end{document}")
     (paper / "appendix.tex").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"appendix: {len(records)} record(s) -> {paper/'appendix.tex'}")
+    print(f"appendix: workbench report + {len(iso_pdfs)} isolated-run record(s) -> {paper/'appendix.tex'}")
 
 
 def _results_table(res: dict) -> str:

@@ -140,3 +140,24 @@ def render_composite_diagram(outpath) -> "Path":
     fig.tight_layout()
     out = Path(outpath); fig.savefig(out, bbox_inches="tight"); plt.close(fig)
     return out
+
+
+def render_byproduct_band(store, outpath, *, band=(0.3, 10.0), graded_value=1.72) -> "Path":
+    """The band_overlay the engine proposed: emitted byproduct vs the behavior-test band."""
+    from viva_emitters import RunReader
+    rr = RunReader.open(str(store))
+    s = rr.series("byproduct")
+    t = s["time"].to_list() if "time" in s.columns else list(range(len(s)))
+    v = s["value"].to_list()
+    fig, ax = plt.subplots(figsize=(6.0, 3.4))
+    ax.axhspan(band[0], band[1], color="#228833", alpha=0.10, label=f"acceptance band [{band[0]}, {band[1]}]")
+    ax.plot(t, v, color="#EE6677", lw=2.0, label="byproduct P (emitted)")
+    ax.axhline(graded_value, color="#228833", ls="--", lw=1.2,
+               label=f"time-average = {graded_value:.2f}  (PASS)")
+    ax.set_xlabel("time (h)"); ax.set_ylabel("byproduct concentration")
+    ax.set_title("byproduct_accumulates: run-backed behavior test", fontsize=10)
+    ax.legend(fontsize=8, frameon=False, loc="lower right")
+    fig.tight_layout()
+    out = Path(outpath); out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=130, bbox_inches="tight"); plt.close(fig)
+    return out
