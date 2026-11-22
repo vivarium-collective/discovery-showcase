@@ -14,24 +14,38 @@ INTERP = f"{sys.executable} {REPO/'scripts'/'isolated_filler.py'}"
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 5
 
 
+def _try(fn):
+    """Run one trial, returning the record or None on any failure (live backend can hang/error)."""
+    try:
+        return fn()
+    except Exception as e:  # noqa: BLE001
+        print(f"  trial failed: {type(e).__name__}", flush=True)
+        return None
+
+
 def main() -> int:
     tmp = Path(tempfile.mkdtemp(prefix="trials-"))
-    b_full = b_min = c_rec = e05c = 0
+    b_done = b_full = b_min = c_done = c_rec = e_done = e05c = 0
+    summary_path = REPO / "workspace" / "reports" / "trials-summary.json"
     for i in range(N):
-        b = run_condition_b(filler_cmd=AGENT, out_dir=tmp / f"b{i}", seed=i)
-        b_full += b["fully_discriminating"]; b_min += b["is_minimal_optimal"]
-        c = run_condition_c(sealed_mechanism="byproduct_inhibition", design_filler_cmd=AGENT,
-                            interpret_filler_cmd=INTERP, resources_dir=RES, out_dir=tmp / f"c{i}", seed=i)
-        c_rec += c["recovered"]
-        e = run_e05("E05c", out_dir=tmp / f"e{i}", filler_cmd="claude -p", seed=i)
-        e05c += e["correct"]
-    out = {"n": N,
-           "condition_B_fully_discriminating": f"{b_full}/{N}",
-           "condition_B_minimal_optimal": f"{b_min}/{N}",
-           "condition_C_closed_loop_recovered": f"{c_rec}/{N}",
-           "E05c_construction_correct": f"{e05c}/{N}"}
+        b = _try(lambda: run_condition_b(filler_cmd=AGENT, out_dir=tmp / f"b{i}", seed=i))
+        if b:
+            b_done += 1; b_full += b["fully_discriminating"]; b_min += b["is_minimal_optimal"]
+        c = _try(lambda: run_condition_c(sealed_mechanism="byproduct_inhibition", design_filler_cmd=AGENT,
+                                         interpret_filler_cmd=INTERP, resources_dir=RES, out_dir=tmp / f"c{i}", seed=i))
+        if c:
+            c_done += 1; c_rec += c["recovered"]
+        e = _try(lambda: run_e05("E05c", out_dir=tmp / f"e{i}", filler_cmd="claude -p", seed=i))
+        if e:
+            e_done += 1; e05c += e["correct"]
+        # write the partial summary after every trial, so a later hang never loses progress
+        out = {"attempted": i + 1, "of": N,
+               "condition_B_fully_discriminating": f"{b_full}/{b_done}",
+               "condition_B_minimal_optimal": f"{b_min}/{b_done}",
+               "condition_C_closed_loop_recovered": f"{c_rec}/{c_done}",
+               "E05c_construction_correct": f"{e05c}/{e_done}"}
+        summary_path.write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
-    (REPO / "workspace" / "reports" / "trials-summary.json").write_text(json.dumps(out, indent=2))
     return 0
 
 
