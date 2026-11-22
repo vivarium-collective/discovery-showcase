@@ -152,3 +152,36 @@ def score_design_run(run_dir, *, seed: int = 0) -> dict:
                                            ("design_score_divergence", not agrees)) if bad],
     }
     return {"scoring": scoring, "integrity": integrity}
+
+
+def score_loop_run(manifest: dict, sealed_truth: dict, run_dir, *, seed: int = 0) -> dict:
+    """Independently score a Condition-C closed-loop run: design discrimination + recovery from the
+    agent's OWN experiment, re-derived from raw artifacts + sealed truth, with agreement + leak checks."""
+    from viva_discovery_showcase.design import INTERVENTIONS, discrimination_score
+    run_dir = Path(run_dir)
+    true_mech = sealed_truth["true_mechanism"]
+    rec = {}
+    rpath = run_dir / f"run-record-{true_mech}-seed{seed}.json"
+    if rpath.is_file():
+        rec = json.loads(rpath.read_text())
+    tpath = run_dir / f"transcript-{true_mech}-seed{seed}.jsonl"
+    chosen = [i for i in (rec.get("chosen_interventions") or []) if i in INTERVENTIONS]
+    disc = discrimination_score(chosen)
+    sufficient = ("spike_substrate" in chosen) and ("remove_byproduct" in chosen)
+    agent_answer = _last_agent_answer(tpath)
+    recovered = bool(sufficient and agent_answer == true_mech)
+    claimed = rec.get("recovered")
+    agrees = claimed is None or bool(claimed) == recovered
+    leaked = _truth_leaked(tpath, true_mech)
+    scoring = {
+        "condition": "C", "chosen_interventions": chosen, "design_discrimination": disc,
+        "design_sufficient": sufficient, "agent_answer": agent_answer, "recovered": recovered,
+        "closed_loop": bool(chosen) and (agent_answer is not None or not sufficient),
+        "scored_independently": True,
+    }
+    integrity = {
+        "truth_leaked_into_prompt": bool(leaked),
+        "run_claim_agrees_with_independent_score": bool(agrees),
+        "hard_failures": [m for m, bad in (("truth_leaked", leaked), ("loop_score_divergence", not agrees)) if bad],
+    }
+    return {"scoring": scoring, "integrity": integrity}

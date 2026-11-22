@@ -1,0 +1,21 @@
+{
+  "condition": "C",
+  "sealed_mechanism": "byproduct_inhibition",
+  "seed": 0,
+  "chosen_interventions": [
+    "spike_substrate",
+    "remove_byproduct",
+    "dilution_control"
+  ],
+  "design_discrimination": 1.0,
+  "design_minimal": false,
+  "design_sufficient": true,
+  "exposed_outcomes": {
+    "spike_regrowth": false,
+    "remove_regrowth": true
+  },
+  "agent_answer": "byproduct_inhibition",
+  "recovered": true,
+  "loop_closed": true,
+  "transcript": "/Users/eranagmon/code/discovery-showcase/workspace/reports/condition-c/transcript-byproduct_inhibition-seed0.jsonl"
+}
