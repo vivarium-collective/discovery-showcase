@@ -11,7 +11,7 @@ acceptance_criteria:
     statement: The engine recovers the concealed plateau mechanism from intervention evidence.
     study: growth-plateau
     behavior: mechanism_recovered
-    status: passing
+    status: in-progress
 hypotheses:
   - id: h1
     statement: substrate exhaustion (the limiting nutrient is used up)
@@ -19,4 +19,4 @@ hypotheses:
     statement: byproduct inhibition (an inhibitory byproduct accumulates)
   - id: h3
     statement: density cap (a quorum/space limit; the decoy, separable by neither arm)
-verdict: supported
+verdict: unassessed
