@@ -41,3 +41,5 @@ workspace/studies/*/baseline-*/
 # stray run stores written to cwd (defensive; real stores live under workspace/studies/*/)
 /baseline-*/
 workspace/reports/findings.html
+
+workspace/studies/*/spatial-colony/

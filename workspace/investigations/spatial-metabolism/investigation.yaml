@@ -1,0 +1,18 @@
+name: spatial-metabolism
+slug: spatial-metabolism
+title: Spatial metabolism — does a spatial dFBA colony grow and self-inhibit across space?
+question: >-
+  When flux-balance metabolism runs at every site of a spatial lattice with diffusion, does the
+  colony grow and accumulate an inhibitory byproduct across space?
+studies:
+  - spatial-colony
+acceptance_criteria:
+  - id: ac-colony-grows
+    statement: The spatial dFBA colony grows and accumulates acetate byproduct across the lattice.
+    study: spatial-colony
+    behavior: colony_grows
+    status: in-progress
+hypotheses:
+  - id: h1
+    statement: metabolism at each site consumes glucose, grows biomass, and secretes acetate that diffuses and accumulates across space
+verdict: unassessed

@@ -1,0 +1,92 @@
+schema_version: 4
+name: spatial-colony
+investigation: spatial-metabolism
+phase: Build
+execution_status: completed
+verdict: supported
+result: supported
+purpose:
+  question: Does a spatial dynamic-FBA colony grow and accumulate an inhibitory byproduct across space?
+  mechanism: spatial dynamic FBA (flux-balance metabolism per lattice site) coupled by diffusion
+  expected_outcome: the colony grows and acetate byproduct accumulates across the lattice
+claim: >-
+  A spatial dynamic-FBA colony — flux-balance metabolism at every lattice site, coupled by
+  diffusion — grows and accumulates an inhibitory acetate byproduct across space.
+baseline:
+- name: baseline
+  composite: spatio_flux.composites.spatial.spatial_many_dfba
+  params: {n_bins: [10, 10]}
+behavior_tests:
+- name: colony_grows
+  measure: {kind: generation_average, path: total_biomass}
+  pass_if: {op: range, low: 0.5, high: 1000.0}
+- name: byproduct_accumulates_spatially
+  measure: {kind: generation_average, path: total_acetate}
+  pass_if: {op: range, low: 0.3, high: 1000.0}
+runs:
+- name: spatial-colony
+  composite: spatio_flux.composites.spatial.spatial_many_dfba
+  params: {n_bins: [10, 10]}
+  store_path: spatial-colony
+  computed_outcomes:
+    colony_grows:
+      result: PASS
+      measured_value: 9.97199
+      evaluated_by: code
+      operator: generation_average/range
+      detail: 9.972 in [0.5, 1000.0]
+      axis:
+        id: colony_grows
+        label: colony_grows
+        verdict: within_tol
+        value: 9.97199
+        meter: 0.504735995
+        detail:
+        expected:
+          kind: band
+          value:
+          low: 0.5
+          high: 1000.0
+          op: ~=
+          tol: 0.05
+          statement:
+          units:
+        margin: 9.47199
+        severity: hard
+        units:
+        knob:
+        citation:
+      reconcile: no_authored
+    byproduct_accumulates_spatially:
+      result: PASS
+      measured_value: 6.06998
+      evaluated_by: code
+      operator: generation_average/range
+      detail: 6.07 in [0.3, 1000.0]
+      axis:
+        id: byproduct_accumulates_spatially
+        label: byproduct_accumulates_spatially
+        verdict: within_tol
+        value: 6.06998
+        meter: 0.50288499
+        detail:
+        expected:
+          kind: band
+          value:
+          low: 0.3
+          high: 1000.0
+          op: ~=
+          tol: 0.05
+          statement:
+          units:
+        margin: 5.76998
+        severity: hard
+        units:
+        knob:
+        citation:
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-22T23:16:43.299066+00:00'
+      inputs_hash: b9ca0da1b4ec81aa
+      store: resolved
