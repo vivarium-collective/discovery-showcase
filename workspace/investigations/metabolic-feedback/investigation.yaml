@@ -1,0 +1,19 @@
+name: metabolic-feedback
+slug: metabolic-feedback
+title: Metabolic feedback — is a model inadequacy fixed by refitting parameters or by revising structure?
+question: >-
+  A two-step pathway model matches a training substrate pulse but a structural inadequacy is suspected.
+  Does a parameter refit or a structural revision (adding product-feedback inhibition) generalize to
+  held-out pulses, and does the revised composite earn its verdict through the engine?
+studies:
+  - pathway-revision
+acceptance_criteria:
+  - id: ac-generalizes
+    statement: The structural revision generalizes to a held-out substrate pulse where a parameter refit overfits.
+    study: pathway-revision
+    behavior: generalizes_heldout
+    status: in-progress
+hypotheses:
+  - id: h1
+    statement: the true mechanism is product-feedback inhibition; adding it (structural revision) matches the true peak intermediate on held-out pulses, while a parameter refit tuned on the training pulse overfits
+verdict: unassessed

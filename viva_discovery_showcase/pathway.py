@@ -113,3 +113,70 @@ def revision_comparison(*, train_pulse: float = 3.0, heldout=(1.0, 5.0, 7.0)) ->
                        "train_error": heldout_error(struct, (train_pulse,)),
                        "heldout_error": heldout_error(struct, heldout)},
     }
+
+
+# --- Process-bigraph wrapper: run the pathway + its structural revision THROUGH the engine ---
+from process_bigraph import Process  # noqa: E402
+
+
+class PathwayProcess(Process):
+    """Two-step metabolic pathway S -> I -> P with optional product-feedback inhibition.
+
+    Emits S, I, P each interval and applies a one-time substrate pulse at ``t_pulse`` (timed off the
+    composite's ``global_time``). Pre-pulse the system equilibrates so product P accumulates; after the
+    pulse the intermediate I overshoots, and product feedback damps that overshoot --- so the peak of I
+    is the observable that discriminates the feedback mechanism. Wrapping the pathway here lets the
+    structural revision be executed in a composite and graded through the engine, not only compared at
+    the model level.
+    """
+
+    config_schema = {
+        "k1": {"_type": "float", "_default": 1.0}, "k2": {"_type": "float", "_default": 0.6},
+        "Km1": {"_type": "float", "_default": 1.0}, "Km2": {"_type": "float", "_default": 1.0},
+        "feedback": {"_type": "boolean", "_default": False},
+        "Ki": {"_type": "float", "_default": 2.0}, "n": {"_type": "float", "_default": 2.0},
+        "pulse": {"_type": "float", "_default": 0.0}, "t_pulse": {"_type": "float", "_default": 8.0},
+        "sub_dt": {"_type": "float", "_default": 0.02},
+    }
+
+    def __init__(self, config, core):
+        super().__init__(config, core)
+        self._applied = False
+
+    def inputs(self):
+        return {"S": "float", "I": "float", "P": "float", "global_time": "float"}
+
+    def outputs(self):
+        return {"S": "overwrite[float]", "I": "overwrite[float]", "P": "overwrite[float]"}
+
+    def describe(self) -> dict:
+        fb = bool(self.config["feedback"])
+        return {"name": "PathwayProcess",
+                "ports": {"S": "float", "I": "float (intermediate)", "P": "float (product)"},
+                "contract": {"mechanism": "product_feedback_inhibition" if fb else "no_feedback",
+                             "expectation": "with product feedback, the intermediate overshoot after a "
+                                            "substrate pulse is damped (a lower peak in I)"}}
+
+    def update(self, state, interval):
+        m = Pathway(k1=self.config["k1"], k2=self.config["k2"], Km1=self.config["Km1"],
+                    Km2=self.config["Km2"], feedback=bool(self.config["feedback"]),
+                    Ki=self.config["Ki"], n=self.config["n"])
+        S, I, P = float(state["S"]), float(state["I"]), float(state["P"])
+        t = float(state.get("global_time", 0.0))
+        dt = min(self.config["sub_dt"], interval)
+        steps = max(1, int(round(interval / dt)))
+        dt = interval / steps
+        for k in range(steps):
+            if not self._applied and (t + k * dt) >= self.config["t_pulse"]:
+                S += self.config["pulse"]
+                self._applied = True
+            S, I, P = _step(S, I, P, m, dt)
+        return {"S": S, "I": I, "P": P}
+
+
+def resolve_pathway(model: str, train_pulse: float = 3.0) -> "Pathway":
+    """Map a revision name to a Pathway: the hidden truth, the unrevised baseline, the parameter
+    refit, or the structural revision (both revisions fit on ``train_pulse``)."""
+    return {"true": TRUE, "baseline": BASELINE,
+            "refit": parameter_refit(train_pulse),
+            "structural": structural_revision(train_pulse)}[model]

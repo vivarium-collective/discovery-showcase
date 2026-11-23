@@ -44,3 +44,35 @@ def monod_batch(core=None, *, mechanism: str = "byproduct_inhibition", **_) -> d
             "outputs": {"biomass": ["biomass"], "substrate": ["substrate"], "byproduct": ["byproduct"]},
         },
     }
+
+
+@composite_generator(
+    name="pathway_pulse",
+    description="Two-step metabolic pathway S->I->P with optional product-feedback inhibition, "
+                "pulsed with substrate after equilibration. The peak intermediate I discriminates the "
+                "feedback mechanism; used to grade the structural revision through the engine.",
+    parameters={
+        "model": {"type": "string", "default": "structural",
+                  "description": "which model to run (true | baseline | refit | structural)"},
+        "pulse": {"type": "float", "default": 5.0, "description": "substrate pulse magnitude (held-out)"},
+        "train_pulse": {"type": "float", "default": 3.0, "description": "pulse the revisions were fit on"},
+    },
+    default_n_steps=40,
+)
+def pathway_pulse(core=None, *, model: str = "structural", pulse: float = 5.0,
+                  train_pulse: float = 3.0, **_) -> dict:
+    from viva_discovery_showcase.pathway import resolve_pathway
+    m = resolve_pathway(model, train_pulse)
+    return {
+        "S": 2.0, "I": 0.0, "P": 0.0,
+        "pathway": {
+            "_type": "process",
+            "address": "local:PathwayProcess",
+            "config": {"k1": m.k1, "k2": m.k2, "Km1": m.Km1, "Km2": m.Km2,
+                       "feedback": bool(m.feedback), "Ki": m.Ki, "n": m.n,
+                       "pulse": float(pulse), "t_pulse": 8.0, "sub_dt": 0.02},
+            "interval": 1.0,
+            "inputs": {"S": ["S"], "I": ["I"], "P": ["P"], "global_time": ["global_time"]},
+            "outputs": {"S": ["S"], "I": ["I"], "P": ["P"]},
+        },
+    }

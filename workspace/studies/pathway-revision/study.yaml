@@ -1,0 +1,68 @@
+schema_version: 4
+name: pathway-revision
+investigation: metabolic-feedback
+phase: Build
+execution_status: completed
+verdict: supported
+result: supported
+purpose:
+  question: Does the structural revision (added product feedback) generalize to a held-out pulse through the engine?
+  mechanism: product-feedback inhibition of the first pathway step
+  expected_outcome: the revised model's peak intermediate matches the true model on a held-out pulse; a parameter refit does not
+claim: >-
+  Executed through the engine on a held-out substrate pulse, the structural revision (adding product
+  feedback) reproduces the true model's peak intermediate, while a parameter refit and the unrevised
+  baseline do not — structural revision, not parameter fitting, is the adequate model.
+baseline:
+- name: baseline
+  composite: viva_discovery_showcase.composites.pathway_pulse
+  params: {model: structural, pulse: 7.0, train_pulse: 3.0}
+variants:
+- name: param_refit
+  params: {model: refit, pulse: 7.0, train_pulse: 3.0}
+- name: unrevised
+  params: {model: baseline, pulse: 7.0, train_pulse: 3.0}
+behavior_tests:
+- name: generalizes_heldout
+  measure: {kind: generation_average, path: peak_intermediate}
+  pass_if: {op: range, low: 0.80, high: 0.98}
+  cites: [true model peak intermediate at held-out pulse 7.0 = 0.895]
+runs:
+- name: pathway-structural
+  composite: viva_discovery_showcase.composites.pathway_pulse
+  params: {model: structural, pulse: 7.0}
+  store_path: pathway-structural
+  computed_outcomes:
+    generalizes_heldout:
+      result: PASS
+      measured_value: 0.901819
+      evaluated_by: code
+      operator: generation_average/range
+      detail: 0.9018 in [0.8, 0.98]
+      axis:
+        id: generalizes_heldout
+        label: generalizes_heldout
+        verdict: within_tol
+        value: 0.901819
+        meter: 0.5398882653061224
+        detail:
+        expected:
+          kind: band
+          value:
+          low: 0.8
+          high: 0.98
+          op: ~=
+          tol: 0.05
+          statement:
+          units:
+        margin: 0.07818099999999994
+        severity: hard
+        units:
+        knob:
+        citation: true model peak intermediate at held-out pulse 7.0 = 0.895
+      reconcile: no_authored
+    _grader:
+      version: 3-freshness
+      graded_at: '2026-11-23T02:04:00.534849+00:00'
+      inputs_hash: dfd699b67ced286c
+      store: resolved
