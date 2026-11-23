@@ -1,0 +1,18 @@
+{
+  "neutral": {
+    "z_true": 0.76,
+    "z_agent": 0.75,
+    "inferred": "neutral",
+    "correct": true,
+    "z_ok": true,
+    "answer": "LAW: S ~ A^z with z=0.75; MECHANISM: neutral; REASON: log-log fit is linear (R\u00b2\u22481) with a steep exponent z\u22480.75 and richness that keeps climbing with area with no saturation plateau \u2014 consistent with "
+  },
+  "equilibrium": {
+    "z_true": 0.127,
+    "z_agent": 0.13,
+    "inferred": "equilibrium",
+    "correct": true,
+    "z_ok": true,
+    "answer": "LAW: S ~ A^z with z=0.13; MECHANISM: equilibrium; REASON: log-log fit gives shallow z\u22480.13 (MacArthur-Wilson 0.1\u20130.3 range, not neutral's 0.5\u20130.8) and richness saturates toward ~38 as area grows, the "
+  }
+}
